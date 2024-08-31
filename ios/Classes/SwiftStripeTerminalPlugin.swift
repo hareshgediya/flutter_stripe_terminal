@@ -77,16 +77,18 @@ public class SwiftStripeTerminalPlugin: NSObject, FlutterPlugin {
                     )
                 }
                 
-                    
-                let cart = Cart(
-                    currency: readerDisplay!.cart.currency,
-                    tax: readerDisplay!.cart.tax,
-                    total: readerDisplay!.cart.total
-                )
-                    
-                readerDisplay?.cart.lineItems.forEach({ item in
-                    cart.lineItems.add(CartLineItem(displayName: item.description, quantity: item.quantity, amount: item.amount))
+                let lineItems = readerDisplay?.cart.lineItems.map({ item in
+                    try! CartLineItemBuilder(displayName: item.description)
+                        .setAmount(item.amount)
+                        .setQuantity(item.quantity)
+                        .build()
                 })
+                
+                let cart = try! CartBuilder(currency: readerDisplay!.cart.currency)
+                    .setTax(readerDisplay!.cart.tax)
+                    .setTotal(readerDisplay!.cart.total)
+                    .setLineItems(lineItems ?? [])
+                    .build()
 
                 Terminal.shared.setReaderDisplay(cart) { (error) in
                     if(error == nil){
